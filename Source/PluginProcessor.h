@@ -36,6 +36,31 @@ Coefficients makePeakFilter(const ChainSettings& chainSettings, double sampleRat
 //==============================================================================
 /**
 */
+
+template<typename ChainType, typename CoefficientType>
+void updateCutFilter(ChainType& chainToUpdate, const CoefficientType& cutCoefficients, const Slope& slope) {
+    chainToUpdate.template setBypassed<0>(true);
+    chainToUpdate.template setBypassed<1>(true);
+    chainToUpdate.template setBypassed<2>(true);
+    chainToUpdate.template setBypassed<3>(true);
+
+    switch (slope) {
+    case Slope::Slope_48:
+        *chainToUpdate.template get<3>().coefficients = *cutCoefficients[3];
+        chainToUpdate.template setBypassed<3>(false);
+    case Slope::Slope_36:
+        *chainToUpdate.template get<2>().coefficients = *cutCoefficients[2];
+        chainToUpdate.template setBypassed<2>(false);
+    case Slope::Slope_24:
+        *chainToUpdate.template get<1>().coefficients = *cutCoefficients[1];
+        chainToUpdate.template setBypassed<1>(false);
+    case Slope::Slope_12:
+        *chainToUpdate.template get<0>().coefficients = *cutCoefficients[0];
+        chainToUpdate.template setBypassed<0>(false);
+        break;
+    }
+}
+
 class SimpleEQAudioProcessor  : public juce::AudioProcessor
 {
 public:
@@ -84,29 +109,7 @@ private:
     void updatePeakFilter(const ChainSettings& chainSettings);
 
     
-    template<typename ChainType, typename CoefficientType>
-    void updateCutFilter(ChainType& chainToUpdate, const CoefficientType& cutCoefficients, const Slope& slope) {
-        chainToUpdate.template setBypassed<0>(true);
-        chainToUpdate.template setBypassed<1>(true);
-        chainToUpdate.template setBypassed<2>(true);
-        chainToUpdate.template setBypassed<3>(true);
-
-        switch (slope) {
-        case Slope::Slope_48:
-            *chainToUpdate.template get<3>().coefficients = *cutCoefficients[3];
-            chainToUpdate.template setBypassed<3>(false);
-        case Slope::Slope_36:
-            *chainToUpdate.template get<2>().coefficients = *cutCoefficients[2];
-            chainToUpdate.template setBypassed<2>(false);
-        case Slope::Slope_24:
-            *chainToUpdate.template get<1>().coefficients = *cutCoefficients[1];
-            chainToUpdate.template setBypassed<1>(false);
-        case Slope::Slope_12:
-            *chainToUpdate.template get<0>().coefficients = *cutCoefficients[0];
-            chainToUpdate.template setBypassed<0>(false);
-            break;
-        }
-    }
+    
     void updateLowCutFilters(const ChainSettings& chainSettings);
 	void updateHighCutFilters(const ChainSettings& chainSettings);
     void updateFilters();
