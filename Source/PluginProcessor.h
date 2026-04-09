@@ -61,6 +61,12 @@ void updateCutFilter(ChainType& chainToUpdate, const CoefficientType& cutCoeffic
     }
 }
 
+inline auto makeLowCutFilter(const ChainSettings& chainSettings, double sampleRate) {
+	return juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq, sampleRate, (chainSettings.lowCutSlope + 1) * 2);
+}
+inline auto makeHighCutFilter(const ChainSettings& chainSettings, double sampleRate) {
+    return juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(chainSettings.highCutFreq, sampleRate, (chainSettings.highCutSlope + 1) * 2);
+}
 class SimpleEQAudioProcessor  : public juce::AudioProcessor
 {
 public:
