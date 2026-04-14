@@ -11,9 +11,34 @@
 #include <JuceHeader.h>
 #include <vector>
 #include "PluginProcessor.h"
-struct CustomRotarySlider : juce::Slider {
-    CustomRotarySlider() : juce::Slider(juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::TextEntryBoxPosition::NoTextBox) {}
-    
+
+struct LookAndFeel : juce::LookAndFeel_V4 {
+    void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPosProportional, float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider) override;
+};
+
+struct RotarySliderWithLabels : juce::Slider {
+    RotarySliderWithLabels(juce::RangedAudioParameter& rap, const juce::String& unitSuffix)
+        : juce::Slider(juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::TextEntryBoxPosition::NoTextBox),
+        param(&rap),
+        suffix(unitSuffix)
+    {
+        setLookAndFeel(&lnf);
+    }
+
+    ~RotarySliderWithLabels() {
+        setLookAndFeel(nullptr);
+    }
+
+    void paint(juce::Graphics& g) override {}
+
+    juce::Rectangle<int> getSliderBounds() const { return juce::Rectangle<int>(); }
+    int getTextHeight() const { return 14; }
+    juce::String getDisplayString() const { return juce::String(); }
+
+private:
+    LookAndFeel lnf;
+    juce::RangedAudioParameter* param;
+    juce::String suffix;
 };
 //==============================================================================
 /**
@@ -50,7 +75,7 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     SimpleEQAudioProcessor& audioProcessor;
-	CustomRotarySlider peakFreqSlider, peakGainSlider, peakQualitySlider, lowCutFreqSlider, highCutFreqSlider, lowCutSlopeSlider, highCutSlopeSlider;
+	RotarySliderWithLabels peakFreqSlider, peakGainSlider, peakQualitySlider, lowCutFreqSlider, highCutFreqSlider, lowCutSlopeSlider, highCutSlopeSlider;
 
     ResponseCurveComponent responseCurveComponent;
 
