@@ -18,6 +18,9 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, i
     g.fillEllipse(bounds);
     g.setColour(Colour(255u, 154u, 1u));
     g.drawEllipse(bounds, 1.f);
+
+
+
     if (auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider)) {
         auto center = bounds.getCentre();
         Path p;
@@ -25,12 +28,26 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, i
         r.setLeft(center.getX() - 2);
         r.setRight(center.getX() + 2);
         r.setTop(bounds.getY());
-        r.setBottom(center.getY());
-        p.addRectangle(r);
+        r.setBottom(center.getY() - rswl->getTextHeight()*1.5);
+        p.addRoundedRectangle(r, 2.0f);
 		jassert(rotaryEndAngle > rotaryStartAngle);
 		auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
 		p.applyTransform(AffineTransform().rotated(sliderAngRad, center.getX(), center.getY()));
         g.fillPath(p);
+
+		g.setFont(rswl->getTextHeight());
+        g.setFont(rswl->getTextHeight());
+        auto text = rswl->getDisplayString();
+
+        // This is the new JUCE 8 way to measure string width!
+        auto strWidth = juce::GlyphArrangement::getStringWidth(g.getCurrentFont(), text);
+
+        r.setSize(strWidth + 4, rswl->getTextHeight() + 2);
+        r.setCentre(bounds.getCentre());
+		g.setColour(Colours::black);
+		g.fillRect(r);
+		g.setColour(Colours::white);
+		g.drawFittedText(text, r.toNearestInt(), juce::Justification::centred, 1);
     }
 }
 void RotarySliderWithLabels::paint(juce::Graphics& g) {
@@ -60,6 +77,11 @@ juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const {
 	r.setY(2);
 	return r;
 }
+
+juce::String RotarySliderWithLabels::getDisplayString() const {
+    return juce::String(getValue());
+}
+
 // =============================================
 ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p) : audioProcessor(p) {
 	const auto& params = audioProcessor.getParameters();
