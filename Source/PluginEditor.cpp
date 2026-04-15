@@ -131,6 +131,7 @@ ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p) : audi
 	for (auto param : params) {
 		param->addListener(this);
 	}
+	updateChain();
 	startTimerHz(60);
 }
 ResponseCurveComponent::~ResponseCurveComponent() {
@@ -141,26 +142,29 @@ ResponseCurveComponent::~ResponseCurveComponent() {
 }
 void ResponseCurveComponent::parameterValueChanged(int parameterIndex, float newValue) {
 	parametersChanged.set(true);
+
 }
 void ResponseCurveComponent::timerCallback() {
 	if (parametersChanged.compareAndSetBool(false, true)) {
 
-		auto chainSettings = getChainSettings(audioProcessor.apvts);
-
-		auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
-		*monoChain.get<ChainPositions::Peak>().coefficients = *peakCoefficients;
-
-		auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
-		auto& lowCut = monoChain.get<ChainPositions::LowCut>();
-		updateCutFilter(lowCut, lowCutCoefficients, chainSettings.lowCutSlope);
-
-		auto highCutCoefficients = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
-		auto& highCut = monoChain.get<ChainPositions::HighCut>();
-		updateCutFilter(highCut, highCutCoefficients, chainSettings.highCutSlope);
+		updateChain();
 
 		repaint();
 	}
 }
+
+void ResponseCurveComponent::updateChain() {
+    auto chainSettings = getChainSettings(audioProcessor.apvts);
+    auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
+    *monoChain.get<ChainPositions::Peak>().coefficients = *peakCoefficients;
+    auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
+    auto& lowCut = monoChain.get<ChainPositions::LowCut>();
+    updateCutFilter(lowCut, lowCutCoefficients, chainSettings.lowCutSlope);
+    auto highCutCoefficients = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
+    auto& highCut = monoChain.get<ChainPositions::HighCut>();
+    updateCutFilter(highCut, highCutCoefficients, chainSettings.highCutSlope);
+}
+
 void ResponseCurveComponent::paint(juce::Graphics& g)
 {
     using namespace juce;
