@@ -171,13 +171,19 @@ void ResponseCurveComponent::timerCallback() {
         }
     }
 
+    while (pathProducer.getNumPathsAvailable()) {
+        pathProducer.getPath(leftChannelFFTPath);
+    }
+
+
+
 	if (parametersChanged.compareAndSetBool(false, true)) {
 
 		updateChain();
 
-		repaint();
+		//repaint();
 	}
-
+    repaint();
 }
 
 void ResponseCurveComponent::updateChain() {
@@ -258,6 +264,9 @@ void ResponseCurveComponent::paint(juce::Graphics& g)
     for (size_t i = 1; i < mags.size(); i++) {
         responseCurve.lineTo(responseArea.getX() + i, map(mags[i]));
     }
+
+    g.setColour(Colours::blue);
+    g.strokePath(leftChannelFFTPath, PathStrokeType(1.f));
 
     g.setColour(Colours::orange);
     g.drawRoundedRectangle(getRenderArea().toFloat(), 4.f, 1.f);

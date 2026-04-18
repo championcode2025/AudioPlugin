@@ -21,7 +21,6 @@ struct Fifo
     {
         static_assert(std::is_same_v<T, juce::AudioBuffer<float>>,
             "prepare(numChannels, numSamples) should only be used when the Fifo is holding juce::AudioBuffer<float>");
-
         juce::ignoreUnused(numChannels);
         capacity = numSamples;
         fifo = std::make_unique<juce::AbstractFifo>(capacity);
@@ -31,9 +30,6 @@ struct Fifo
 
     void prepare(size_t numElements)
     {
-        static_assert(std::is_same_v<T, std::vector<float>>,
-            "prepare(size_t) should only be used when the Fifo is holding std::vector<float>");
-
         capacity = (int)numElements;
         fifo = std::make_unique<juce::AbstractFifo>(capacity);
         buffer.clear();
@@ -42,6 +38,8 @@ struct Fifo
 
     bool push(const T& t)
     {
+        if (!fifo) return false; // SAFETY CHECK: Don't crash if uninitialized!
+
         auto write = fifo->write(1);
         if (write.blockSize1 > 0)
         {
@@ -53,6 +51,8 @@ struct Fifo
 
     bool pull(T& t)
     {
+        if (!fifo) return false; // SAFETY CHECK: Don't crash if uninitialized!
+
         auto read = fifo->read(1);
         if (read.blockSize1 > 0)
         {
@@ -64,6 +64,7 @@ struct Fifo
 
     int getNumAvailableForReading() const
     {
+        if (!fifo) return 0; // SAFETY CHECK: Don't crash if uninitialized!
         return fifo->getNumReady();
     }
 

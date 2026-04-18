@@ -103,6 +103,12 @@ struct AnalyzerPathGenerator
     /*
      converts 'renderData[]' into a juce::Path
      */
+
+    AnalyzerPathGenerator()
+    {
+        pathFifo.prepare(48); // Pre-allocate memory for 48 paths
+    }
+
     void generatePath(const std::vector<float>& renderData,
         juce::Rectangle<float> renderArea,
         int fftSize,
@@ -228,6 +234,8 @@ private:
     FFTDataGenerator<std::vector<float>> leftChannelFFTDataGenerator;
 
     AnalyzerPathGenerator<juce::Path> pathProducer;
+
+    juce::Path leftChannelFFTPath;
 
 
 };
