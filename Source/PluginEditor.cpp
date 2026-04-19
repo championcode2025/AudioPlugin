@@ -193,6 +193,11 @@ void ResponseCurveComponent::timerCallback() {
 
 void ResponseCurveComponent::updateChain() {
     auto chainSettings = getChainSettings(audioProcessor.apvts);
+
+    monoChain.setBypassed<ChainPositions::LowCut>(chainSettings.lowCutBypassed);
+    monoChain.setBypassed<ChainPositions::Peak>(chainSettings.peakBypassed);
+    monoChain.setBypassed<ChainPositions::HighCut>(chainSettings.highCutBypassed);
+
     auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
     *monoChain.get<ChainPositions::Peak>().coefficients = *peakCoefficients;
     auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
@@ -225,36 +230,40 @@ void ResponseCurveComponent::paint(juce::Graphics& g)
     for (int i = 0; i < w; i++) {
         double mag = 1.f;
         auto freq = mapToLog10(double(i) / double(w), 20.0, 20000.0);
-
         if (!monoChain.isBypassed<ChainPositions::Peak>()) {
             mag *= peak.coefficients->getMagnitudeForFrequency(freq, sampleRate);
         }
-        if (!lowCut.isBypassed<0>()) {
-            mag *= lowCut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        }
-        if (!lowCut.isBypassed<1>()) {
-            mag *= lowCut.get<1>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        }
-        if (!lowCut.isBypassed<2>()) {
-            mag *= lowCut.get<2>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        }
-        if (!lowCut.isBypassed<3>()) {
-            mag *= lowCut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        }
-
-        if (!highCut.isBypassed<0>()) {
-            mag *= highCut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        }
-        if (!highCut.isBypassed<1>()) {
-            mag *= highCut.get<1>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        }
-        if (!highCut.isBypassed<2>()) {
-            mag *= highCut.get<2>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        }
-        if (!highCut.isBypassed<3>()) {
-            mag *= highCut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!monoChain.isBypassed<ChainPositions::LowCut>())
+        {
+            if (!lowCut.isBypassed<0>()) {
+                mag *= lowCut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+            }
+            if (!lowCut.isBypassed<1>()) {
+                mag *= lowCut.get<1>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+            }
+            if (!lowCut.isBypassed<2>()) {
+                mag *= lowCut.get<2>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+            }
+            if (!lowCut.isBypassed<3>()) {
+                mag *= lowCut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+            }
         }
 
+        if (!monoChain.isBypassed<ChainPositions::HighCut>())
+        {
+            if (!highCut.isBypassed<0>()) {
+                mag *= highCut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+            }
+            if (!highCut.isBypassed<1>()) {
+                mag *= highCut.get<1>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+            }
+            if (!highCut.isBypassed<2>()) {
+                mag *= highCut.get<2>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+            }
+            if (!highCut.isBypassed<3>()) {
+                mag *= highCut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+            }
+        }
         mags[i] = Decibels::gainToDecibels(mag);
     }
 
@@ -387,25 +396,29 @@ juce::Rectangle<int> ResponseCurveComponent::getAnalysisArea() {
 }
 
 //==============================================================================
-SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p),
-	peakFreqSlider(*audioProcessor.apvts.getParameter("Peak Freq"), " Hz"),
-	peakGainSlider(*audioProcessor.apvts.getParameter("Peak Gain"), " dB"),
-	peakQualitySlider(*audioProcessor.apvts.getParameter("Peak Quality"), ""),
-	lowCutFreqSlider(*audioProcessor.apvts.getParameter("LowCut Freq"), " Hz"),
-	highCutFreqSlider(*audioProcessor.apvts.getParameter("HighCut Freq"), " Hz"),
-	lowCutSlopeSlider(*audioProcessor.apvts.getParameter("LowCut Slope"), " dB/Oct"),
-	highCutSlopeSlider(*audioProcessor.apvts.getParameter("HighCut Slope"), " dB/Oct"),
+SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor(SimpleEQAudioProcessor& p)
+    : AudioProcessorEditor(&p), audioProcessor(p),
+    peakFreqSlider(*audioProcessor.apvts.getParameter("Peak Freq"), " Hz"),
+    peakGainSlider(*audioProcessor.apvts.getParameter("Peak Gain"), " dB"),
+    peakQualitySlider(*audioProcessor.apvts.getParameter("Peak Quality"), ""),
+    lowCutFreqSlider(*audioProcessor.apvts.getParameter("LowCut Freq"), " Hz"),
+    highCutFreqSlider(*audioProcessor.apvts.getParameter("HighCut Freq"), " Hz"),
+    lowCutSlopeSlider(*audioProcessor.apvts.getParameter("LowCut Slope"), " dB/Oct"),
+    highCutSlopeSlider(*audioProcessor.apvts.getParameter("HighCut Slope"), " dB/Oct"),
 
-	responseCurveComponent(audioProcessor),
-	peakFreqSliderAttachment(audioProcessor.apvts, "Peak Freq", peakFreqSlider),
-	peakGainSliderAttachment(audioProcessor.apvts, "Peak Gain", peakGainSlider),
-	peakQualitySliderAttachment(audioProcessor.apvts, "Peak Quality", peakQualitySlider),
-	lowCutFreqSliderAttachment(audioProcessor.apvts, "LowCut Freq", lowCutFreqSlider),
-	highCutFreqSliderAttachment(audioProcessor.apvts, "HighCut Freq", highCutFreqSlider),
-	lowCutSlopeSliderAttachment(audioProcessor.apvts, "LowCut Slope", lowCutSlopeSlider),
-	highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlopeSlider)
-	
+    responseCurveComponent(audioProcessor),
+    peakFreqSliderAttachment(audioProcessor.apvts, "Peak Freq", peakFreqSlider),
+    peakGainSliderAttachment(audioProcessor.apvts, "Peak Gain", peakGainSlider),
+    peakQualitySliderAttachment(audioProcessor.apvts, "Peak Quality", peakQualitySlider),
+    lowCutFreqSliderAttachment(audioProcessor.apvts, "LowCut Freq", lowCutFreqSlider),
+    highCutFreqSliderAttachment(audioProcessor.apvts, "HighCut Freq", highCutFreqSlider),
+    lowCutSlopeSliderAttachment(audioProcessor.apvts, "LowCut Slope", lowCutSlopeSlider),
+    highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlopeSlider),
+
+    lowcutBypassButtonAttachment(audioProcessor.apvts, "LowCut Bypassed", lowcutBypassButton),
+    highcutBypassButtonAttachment(audioProcessor.apvts, "HighCut Bypassed", highcutBypassButton),
+    peakBypassButtonAttachment(audioProcessor.apvts, "Peak Bypassed", peakBypassButton),
+    analyzerEnabledButtonAttachment(audioProcessor.apvts, "Analyzer Enabled", analyzerEnabledButton)
 
 {
 
@@ -464,19 +477,27 @@ void SimpleEQAudioProcessorEditor::resized()
 
 	responseCurveComponent.setBounds(responseArea);
 	bounds.removeFromTop(5);    
+
+
+
 	auto lowCutArea = bounds.removeFromLeft(bounds.getWidth() * 0.33);
 	auto highCutArea = bounds.removeFromRight(bounds.getWidth() * 0.5);
 
+    lowcutBypassButton.setBounds(lowCutArea.removeFromTop(25));
 	lowCutFreqSlider.setBounds(lowCutArea.removeFromTop(lowCutArea.getHeight()*0.5));
 	lowCutSlopeSlider.setBounds(lowCutArea);
+
+    highcutBypassButton.setBounds(highCutArea.removeFromTop(25));
 	highCutFreqSlider.setBounds(highCutArea.removeFromTop(highCutArea.getHeight()*0.5));
 	highCutSlopeSlider.setBounds(highCutArea);
 
+    peakBypassButton.setBounds(bounds.removeFromTop(25));
 	peakFreqSlider.setBounds(bounds.removeFromTop(bounds.getHeight() * 0.33));
 	peakGainSlider.setBounds(bounds.removeFromTop(bounds.getHeight() * 0.5));
 	peakQualitySlider.setBounds(bounds);
 }
 
 std::vector<juce::Component*> SimpleEQAudioProcessorEditor::getComps() {
-    return { &peakFreqSlider, &peakGainSlider, &peakQualitySlider, &lowCutFreqSlider, &highCutFreqSlider, &lowCutSlopeSlider, &highCutSlopeSlider, &responseCurveComponent};
+    return { &peakFreqSlider, &peakGainSlider, &peakQualitySlider, &lowCutFreqSlider, &highCutFreqSlider, &lowCutSlopeSlider, &highCutSlopeSlider, &responseCurveComponent,
+    &lowcutBypassButton, &peakBypassButton, &highcutBypassButton, &analyzerEnabledButton};
 }
