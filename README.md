@@ -1,10 +1,10 @@
-# SimpleEQ 🎛️
+# SimpleEQ 
 
 A professional-grade, 3-band parametric equalizer audio plugin (VST3 / AU / Standalone) built in C++ using the JUCE framework. 
 
 This plugin features a fully custom user interface, real-time FFT spectrum analysis, and mathematically precise DSP filtering to give users complete control over their audio signal.
 
-## ✨ Features
+## Features
 
 * **3-Band Parametric EQ:**
   * **Low Cut (High-Pass):** Adjustable frequency and slope (12, 24, 36, 48 dB/Oct).
@@ -38,7 +38,6 @@ If you just want to use the EQ in your DAW (like Reaper, Ableton, FL Studio, etc
 2. Download the `.zip` file for your operating system.
 3. Extract the `.vst3` file and place it in your system's VST3 directory:
    * **Windows:** `C:\Program Files\Common Files\VST3`
-   * **macOS:** `/Library/Audio/Plug-Ins/VST3`
 4. Rescan your plugins in your DAW.
 
 ## 💻 Building from Source
