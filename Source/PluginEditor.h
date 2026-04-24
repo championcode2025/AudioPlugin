@@ -255,9 +255,11 @@ private:
 
     PathProducer leftPathProducer, rightPathProducer;
 
-
-
 };
+
+struct powerButton : juce::ToggleButton { };
+struct AnalyzerButton : juce::ToggleButton { };
+
 
 class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor
 {
@@ -282,7 +284,9 @@ private:
 	using Attachment = APVTS::SliderAttachment;
 	Attachment peakFreqSliderAttachment, peakGainSliderAttachment, peakQualitySliderAttachment, lowCutFreqSliderAttachment, highCutFreqSliderAttachment, lowCutSlopeSliderAttachment, highCutSlopeSliderAttachment;
 
-    juce::ToggleButton lowcutBypassButton, highcutBypassButton, peakBypassButton, analyzerEnabledButton;
+    powerButton lowcutBypassButton, highcutBypassButton, peakBypassButton;
+    AnalyzerButton analyzerEnabledButton;
+
     using ButtonAttachment = APVTS::ButtonAttachment;
     ButtonAttachment lowcutBypassButtonAttachment, highcutBypassButtonAttachment, peakBypassButtonAttachment, analyzerEnabledButtonAttachment;
 	std::vector<juce::Component*> getComps();
